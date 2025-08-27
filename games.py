@@ -63,7 +63,7 @@ def run_games():
         st.session_state.level = 1
         st.session_state.misses = 0
 
-   # start_btn = st.button("▶️ Start Game")
+    start_btn = st.button("▶️ Start Game")
     stop_btn = st.button("⏹️ Stop Game")
 
     if start_btn:
