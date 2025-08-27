@@ -25,70 +25,67 @@ def save_progress(progress):
 # Catch Ball Game
 # -------------------------
 def run_games():
-    mp_hands = mp.solutions.hands
-    cap = cv2.VideoCapture(0)
+    st.title("🎮 Catch the Ball Game (Streamlit Edition)")
 
-    if not cap.isOpened():
-        st.error("❌ Camera not accessible. Please check permissions.")
-        return 0, 1  # Default values
+    if "score" not in st.session_state:
+        st.session_state.score = 0
+    if "level" not in st.session_state:
+        st.session_state.level = 1
+    if "ball_x" not in st.session_state:
+        st.session_state.ball_x = random.randint(50, 550)
+    if "ball_y" not in st.session_state:
+        st.session_state.ball_y = 50
 
-    score, level = 0, 1
-    ball_x, ball_y = random.randint(50, 590), 0
-    ball_speed = 5
-    last_time = time.time()
+    picture = st.camera_input("📷 Enable your camera to play")
 
-    with mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7) as hands:
-        while cap.isOpened():
-            ret, frame = cap.read()
-            if not ret:
-                break
+    if picture:
+        # Convert image to OpenCV format
+        file_bytes = np.asarray(bytearray(picture.getbuffer()), dtype=np.uint8)
+        frame = cv2.imdecode(file_bytes, 1)
 
-            frame = cv2.flip(frame, 1)
-            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = hands.process(rgb_frame)
+        h, w, _ = frame.shape
 
-            h, w, _ = frame.shape
-            hand_x, hand_y = None, None
+        # Ball parameters
+        ball_radius = 20
+        basket_y = h - 50
+        basket_x = w // 2
 
-            if results.multi_hand_landmarks:
-                for hand_landmarks in results.multi_hand_landmarks:
-                    hand_x = int(hand_landmarks.landmark[8].x * w)
-                    hand_y = int(hand_landmarks.landmark[8].y * h)
-                    cv2.circle(frame, (hand_x, hand_y), 10, (255, 0, 0), -1)
+        # Draw the ball
+        cv2.circle(frame, (st.session_state.ball_x, st.session_state.ball_y),
+                   ball_radius, (0, 0, 255), -1)
 
-            # Ball movement
-            ball_y += ball_speed
-            if ball_y > h:
-                ball_y = 0
-                ball_x = random.randint(50, w - 50)
+        # Draw basket
+        cv2.rectangle(frame, (basket_x - 50, basket_y - 20),
+                      (basket_x + 50, basket_y + 20), (0, 255, 0), 2)
 
-            # Collision detection
-            if hand_x and abs(hand_x - ball_x) < 50 and abs(hand_y - ball_y) < 50:
-                score += 10
-                ball_y = 0
-                ball_x = random.randint(50, w - 50)
+        # Move ball down
+        st.session_state.ball_y += 10
 
-                if score % 50 == 0:
-                    level += 1
-                    ball_speed += 2
+        # Reset ball if it goes down
+        if st.session_state.ball_y > h:
+            st.session_state.ball_x = random.randint(50, w - 50)
+            st.session_state.ball_y = 50
 
-            # HUD
-            cv2.putText(frame, f"Score: {score}", (10, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
-            cv2.putText(frame, f"Level: {level}", (10, 80),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
+        # Detect "catch" (center of ball in basket area)
+        if (basket_x - 50 < st.session_state.ball_x < basket_x + 50 and
+                basket_y - 20 < st.session_state.ball_y < basket_y + 20):
+            st.session_state.score += 1
+            st.session_state.ball_y = 50
+            st.session_state.ball_x = random.randint(50, w - 50)
 
-            cv2.circle(frame, (ball_x, ball_y), 20, (0, 0, 255), -1)
+            # Increase level every 5 points
+            if st.session_state.score % 5 == 0:
+                st.session_state.level += 1
 
-            cv2.imshow("Catch the Ball 🎮 (Press Q to Quit)", frame)
+        # Show text
+        cv2.putText(frame, f"Score: {st.session_state.score}", (20, 40),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+        cv2.putText(frame, f"Level: {st.session_state.level}", (20, 80),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
 
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
+        st.image(frame, channels="BGR")
 
-    cap.release()
-    cv2.destroyAllWindows()
-    return score, level
-
+    return st.session_state.score, st.session_state.level
 # -------------------------
 # Streamlit Main App
 # -------------------------
