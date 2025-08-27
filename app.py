@@ -4,9 +4,9 @@ import os
 from time import sleep
 # import game
 # import cv2
-import mediapipe as mp
-import random
-import numpy as np
+# import mediapipe as mp
+# import random
+# import numpy as np
 
 # --- IMPORTANT: Import your game function ---
 # Make sure game.py is in the same directory
