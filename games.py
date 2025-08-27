@@ -55,7 +55,7 @@ def draw_hud(frame, score, level, misses):
 
 # --- Main Game ---
 def run_games():
-    st.title("🎮 Catch the Ball Game")
+    #st.title("🎮 Catch the Ball Game")
 
     if "playing" not in st.session_state:
         st.session_state.playing = False
@@ -63,7 +63,7 @@ def run_games():
         st.session_state.level = 1
         st.session_state.misses = 0
 
-    start_btn = st.button("▶️ Start Game")
+   # start_btn = st.button("▶️ Start Game")
     stop_btn = st.button("⏹️ Stop Game")
 
     if start_btn:
