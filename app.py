@@ -147,7 +147,7 @@ with col1:
     if st.button("▶️ Play Game", use_container_width=True):
         st.info("Launching game... Close the game window when you're done.")
         
-        final_score, final_level = games.run_games()
+        final_score, final_level =run_games()
         
         if final_score > st.session_state.progress.get('score', 0):
             st.success(f"New High Score: {final_score}! Progress saved.")
