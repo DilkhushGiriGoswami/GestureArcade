@@ -2,7 +2,7 @@ import streamlit as st
 import json
 import os
 from time import sleep
-import game
+# import game
 import cv2
 import mediapipe as mp
 import random
