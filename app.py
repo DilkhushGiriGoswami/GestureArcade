@@ -11,7 +11,7 @@ from time import sleep
 # --- IMPORTANT: Import your game function ---
 # Make sure game.py is in the same directory
 try:
-    from games import run_game
+    from games import run_games
 except ImportError:
     # Provide a dummy function if game.py is not found, to avoid crashing
     def run_game():
@@ -147,7 +147,7 @@ with col1:
     if st.button("▶️ Play Game", use_container_width=True):
         st.info("Launching game... Close the game window when you're done.")
         
-        final_score, final_level = run_game()
+        final_score, final_level = run_games()
         
         if final_score > st.session_state.progress.get('score', 0):
             st.success(f"New High Score: {final_score}! Progress saved.")
