@@ -72,7 +72,7 @@ def draw_game_over(frame, score):
 
 
 # --- Main Game ---
-def run_game():
+def run_games():
     st.title("🎮 Catch the Ball Game")
 
     start_btn = st.button("Start Game")
