@@ -1,140 +1,134 @@
+import streamlit as st
 import cv2
 import mediapipe as mp
 import random
+import time
 import json
 import os
-import numpy as np
-import streamlit as st
 
-# --- Constants ---
+# -------------------------
+# Progress File Handling
+# -------------------------
 PROGRESS_FILE = "progress.json"
-mp_hands = mp.solutions.hands
-mp_drawing = mp.solutions.drawing_utils
 
-
-# --- Load Progress ---
 def load_progress():
     if os.path.exists(PROGRESS_FILE):
-        try:
-            with open(PROGRESS_FILE, "r") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            return {"score": 0, "level": 1}
+        with open(PROGRESS_FILE, "r") as f:
+            return json.load(f)
     return {"score": 0, "level": 1}
 
-
-# --- Save Progress ---
-def save_progress(score, level):
+def save_progress(progress):
     with open(PROGRESS_FILE, "w") as f:
-        json.dump({"score": score, "level": level}, f)
+        json.dump(progress, f)
 
-
-# --- Gesture Helpers ---
-def detect_hand_center(hand_landmarks, width, height):
-    cx = int(hand_landmarks.landmark[9].x * width)
-    cy = int(hand_landmarks.landmark[9].y * height)
-    return cx, cy
-
-
-# --- Drawing Helpers ---
-def draw_environment(frame, level):
-    overlay = np.zeros_like(frame, np.uint8)
-    rows, _, _ = frame.shape
-    for i in range(rows):
-        color = (int(50 + (i/rows)*100), int((i/rows)*150), int((i/rows)*200))
-        overlay[i, :] = color
-    frame = cv2.addWeighted(frame, 0.7, overlay, 0.3, 0)
-    return frame
-
-
-def draw_hud(frame, score, level, misses):
-    cv2.putText(frame, f"Score: {score}", (20, 40), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 255, 0), 2)
-    cv2.putText(frame, f"Level: {level}", (20, 80), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 200, 255), 2)
-    cv2.putText(frame, f"Misses: {misses}/3", (20, 120), cv2.FONT_HERSHEY_DUPLEX, 1, (0, 0, 255), 2)
-
-
-# --- Main Game ---
+# -------------------------
+# Catch Ball Game
+# -------------------------
 def run_games():
-    #st.title("🎮 Catch the Ball Game")
+    mp_hands = mp.solutions.hands
+    cap = cv2.VideoCapture(0)
 
-    if "playing" not in st.session_state:
-        st.session_state.playing = False
-        st.session_state.score = 0
-        st.session_state.level = 1
-        st.session_state.misses = 0
+    if not cap.isOpened():
+        st.error("❌ Camera not accessible. Please check permissions.")
+        return 0, 1  # Default values
 
-    start_btn = st.button("▶️ Start Game")
-    stop_btn = st.button("⏹️ Stop Game")
+    score, level = 0, 1
+    ball_x, ball_y = random.randint(50, 590), 0
+    ball_speed = 5
+    last_time = time.time()
 
-    if start_btn:
-        st.session_state.playing = True
-        st.session_state.score = 0
-        st.session_state.level = load_progress().get("level", 1)
-        st.session_state.misses = 0
-
-    if stop_btn:
-        st.session_state.playing = False
-        save_progress(st.session_state.score, st.session_state.level)
-        st.success(f"✅ Final Score: {st.session_state.score} | Level: {st.session_state.level}")
-
-    frame_placeholder = st.empty()
-
-    if st.session_state.playing:
-        cap = cv2.VideoCapture(0)
-        hands = mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.7)
-
-        width, height = 640, 480
-        cap.set(3, width)
-        cap.set(4, height)
-
-        ball_x, ball_y = random.randint(50, width - 50), 0
-        ball_speed, ball_radius = 5 + st.session_state.level, 20
-
-        while st.session_state.playing and cap.isOpened():
+    with mp_hands.Hands(max_num_hands=1, min_detection_confidence=0.7) as hands:
+        while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
             frame = cv2.flip(frame, 1)
-            frame = draw_environment(frame, st.session_state.level)
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            results = hands.process(rgb_frame)
 
-            rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            results = hands.process(rgb)
+            h, w, _ = frame.shape
+            hand_x, hand_y = None, None
 
-            hand_center = None
             if results.multi_hand_landmarks:
                 for hand_landmarks in results.multi_hand_landmarks:
-                    mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
-                    hand_center = detect_hand_center(hand_landmarks, width, height)
+                    hand_x = int(hand_landmarks.landmark[8].x * w)
+                    hand_y = int(hand_landmarks.landmark[8].y * h)
+                    cv2.circle(frame, (hand_x, hand_y), 10, (255, 0, 0), -1)
 
-            # Ball mechanics
-            ball_y += int(ball_speed)
-            if ball_y > height:
-                st.session_state.misses += 1
-                ball_x, ball_y = random.randint(50, width - 50), 0
-                if st.session_state.misses >= 3:
-                    st.session_state.playing = False
-                    break
+            # Ball movement
+            ball_y += ball_speed
+            if ball_y > h:
+                ball_y = 0
+                ball_x = random.randint(50, w - 50)
 
-            if hand_center:
-                hx, hy = hand_center
-                if abs(hx - ball_x) < 40 and abs(hy - ball_y) < 40:
-                    st.session_state.score += 1
-                    ball_x, ball_y = random.randint(50, width - 50), 0
-                    if st.session_state.score > 0 and st.session_state.score % 5 == 0:
-                        st.session_state.level += 1
-                        ball_speed += 1
+            # Collision detection
+            if hand_x and abs(hand_x - ball_x) < 50 and abs(hand_y - ball_y) < 50:
+                score += 10
+                ball_y = 0
+                ball_x = random.randint(50, w - 50)
 
-            cv2.circle(frame, (ball_x, ball_y), ball_radius, (0, 0, 255), -1)
-            draw_hud(frame, st.session_state.score, st.session_state.level, st.session_state.misses)
+                if score % 50 == 0:
+                    level += 1
+                    ball_speed += 2
 
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+            # HUD
+            cv2.putText(frame, f"Score: {score}", (10, 40),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3)
+            cv2.putText(frame, f"Level: {level}", (10, 80),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
 
-        cap.release()
-        hands.close()
-        save_progress(st.session_state.score, st.session_state.level)
+            cv2.circle(frame, (ball_x, ball_y), 20, (0, 0, 255), -1)
 
+            cv2.imshow("Catch the Ball 🎮 (Press Q to Quit)", frame)
+
+            if cv2.waitKey(1) & 0xFF == ord("q"):
+                break
+
+    cap.release()
+    cv2.destroyAllWindows()
+    return score, level
+
+# -------------------------
+# Streamlit Main App
+# -------------------------
+def main():
+    st.set_page_config(page_title="Catch the Ball 🎮", layout="wide")
+
+    # Gradient background
+    st.markdown("""
+        <style>
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            font-family: 'Trebuchet MS', sans-serif;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    st.title("🎮 Gesture Arcade - Catch the Ball")
+    st.write("👉 Use your hand to catch the falling ball. Press **Q** to quit the game window.")
+
+    # Load progress
+    if "progress" not in st.session_state:
+        st.session_state.progress = load_progress()
+
+    st.metric("High Score", st.session_state.progress["score"])
+    st.metric("Highest Level", st.session_state.progress["level"])
+
+    if st.button("▶️ Start Game", use_container_width=True):
+        st.info("Launching game... Close the camera window when done.")
+        final_score, final_level = run_games()
+
+        # Save progress if improved
+        if final_score > st.session_state.progress["score"]:
+            st.session_state.progress["score"] = final_score
+            st.success(f"🎉 New High Score: {final_score}!")
+        if final_level > st.session_state.progress["level"]:
+            st.session_state.progress["level"] = final_level
+            st.success(f"🚀 New Highest Level: {final_level}!")
+
+        save_progress(st.session_state.progress)
 
 if __name__ == "__main__":
-    run_games()
+    main()
