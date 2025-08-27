@@ -7,16 +7,16 @@ from time import sleep
 # import mediapipe as mp
 # import random
 # import numpy as np
-
+from games import run_games
 # --- IMPORTANT: Import your game function ---
 # Make sure game.py is in the same directory
-try:
-    from games import run_games
-except ImportError:
-    # Provide a dummy function if game.py is not found, to avoid crashing
-    def run_game():
-        st.error("`game.py` not found. Please make sure it's in the same folder.")
-        return 0, 1
+# try:
+#     from games import run_games
+# except ImportError:
+#     # Provide a dummy function if game.py is not found, to avoid crashing
+#     def run_game():
+#         st.error("`game.py` not found. Please make sure it's in the same folder.")
+#         return 0, 1
 
 st.set_page_config(page_title="Catch the Ball Game 🎮", layout="wide")
 
