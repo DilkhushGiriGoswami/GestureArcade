@@ -3,7 +3,7 @@ import json
 import os
 from time import sleep
 # import game
-import cv2
+# import cv2
 import mediapipe as mp
 import random
 import numpy as np
