@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import os
 from time import sleep
+import game
 
 # --- IMPORTANT: Import your game function ---
 # Make sure game.py is in the same directory
