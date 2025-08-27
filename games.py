@@ -77,7 +77,7 @@ def run_games():
 
     start_btn = st.button("Start Game")
     if not start_btn:
-        return
+        return 0, 1   # <-- return default values instead of None
 
     cap = cv2.VideoCapture(0)
     hands = mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.7)
@@ -145,6 +145,7 @@ def run_games():
     hands.close()
     st.success(f"Final Score: {score} | Level: {level}")
     return score, level
+
  
 
 if __name__ == "__main__":
