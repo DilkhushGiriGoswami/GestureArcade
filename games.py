@@ -144,8 +144,8 @@ def run_games():
     cap.release()
     hands.close()
     st.success(f"Final Score: {score} | Level: {level}")
-    return score,level
-
+    return score, level
+ 
 
 if __name__ == "__main__":
     run_game()
