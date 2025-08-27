@@ -125,7 +125,29 @@ def run_games():
                     game_over, fist_count = False, 0
                 elif fist_count >= 2:  # Exit
                     break
-            if cv2.waitKey(1) & 0xFF == 27: break
+            stop = st.button("Stop Game")
+
+        while True:
+            # your game logic ...
+        
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+        
+            # Break if user clicks Stop
+            if stop:
+                break
+stop = st.button("Stop Game")
+
+while True:
+    # your game logic ...
+
+    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+
+    # Break if user clicks Stop
+    if stop:
+        break
+
             continue
 
         ball_y += int(ball_speed)
@@ -154,7 +176,18 @@ def run_games():
 # Display inside Streamlit
         st.image(frame_rgb, channels="RGB", use_container_width=True)
 
-        if cv2.waitKey(1) & 0xFF == 27: break
+        stop = st.button("Stop Game")
+
+    while True:
+    # your game logic ...
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_placeholder.image(frame_rgb, channels="RGB", use_container_width=True)
+
+    # Break if user clicks Stop
+        if stop:
+            break
+
     
     final_score = score
     final_level = level
