@@ -11,7 +11,7 @@ from time import sleep
 # --- IMPORTANT: Import your game function ---
 # Make sure game.py is in the same directory
 try:
-    from game import run_game
+    from games import run_game
 except ImportError:
     # Provide a dummy function if game.py is not found, to avoid crashing
     def run_game():
