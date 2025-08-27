@@ -5,7 +5,7 @@ import json
 import os
 import numpy as np
 import time
-
+import streamlit as st
 # --- Constants & Setup ---
 PROGRESS_FILE = "progress.json"
 mp_hands = mp.solutions.hands
@@ -149,7 +149,10 @@ def run_games():
 
         cv2.circle(frame, (ball_x, ball_y), ball_radius, (0, 0, 255), -1)
         draw_hud(frame, score, level, misses)
-        cv2.imshow("Ball Catch Game", frame)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+# Display inside Streamlit
+        st.image(frame_rgb, channels="RGB", use_container_width=True)
 
         if cv2.waitKey(1) & 0xFF == 27: break
     
