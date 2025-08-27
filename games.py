@@ -72,7 +72,7 @@ def draw_game_over(frame, score):
     cv2.putText(frame, "Fist once: Restart | Fist twice: Exit", (100, 330), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (200, 200, 0), 2)
 
 # --- Main Game Function ---
-def run_game():
+def run_games():
     """Contains all game logic and is called by app.py."""
     cap = cv2.VideoCapture(0)
     hands = mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.7)
